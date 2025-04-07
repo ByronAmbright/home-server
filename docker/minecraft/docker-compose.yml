@@ -1,0 +1,35 @@
+services:
+  vanilla-minecraft-server:
+    image: itzg/minecraft-server:latest
+    container_name: vanilla-minecraft-server
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+    networks:
+      - docker-net
+    environment:
+      EULA: ${MINECRAFT_EULA}
+      VERSION: ${MINECRAFT_VERSION}
+      MEMORY: ${MINECRAFT_MEMORY}
+      MOTD: ${MINECRAFT_MOTD}
+      ICON: ${MINECRAFT_ICON}
+      USE_AIKAR_FLAGS: ${MINECRAFT_USE_AIKAR_FLAGS}
+      DIFFICULTY: ${MINECRAFT_DIFFICULTY}
+      LEVEL: ${MINECRAFT_LEVEL}
+      OPS: ${MINECRAFT_OPERATORS}
+      ENABLE_WHITELIST: ${MINECRAFT_ENABLE_WHITELIST}
+      WHITELIST: ${MINECRAFT_WHITELIST}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro                                      #To have the same time as the host
+      - /etc/localtime:/etc/timezone:ro                                       #To have the same time as the host
+      - minecraft-vanilla-volume-data:/data
+    ports:
+      - ${PORT_MINECRAFT_VANILLA_SERVER}:${PORT_MINECRAFT_VANILLA_SERVER}
+
+volumes:
+  minecraft-vanilla-volume-data:
+    external: true
+
+networks:
+  docker-net:
+    external: true

@@ -1,0 +1,16 @@
+services:
+  personal-website:
+    image: ghcr.io/static-web-server/static-web-server:2-alpine
+    container_name: personal-website
+    restart: unless-stopped
+    environment:
+      - SERVER_ROOT=${SERVER_ROOT}
+      - SERVER_PORT=${PORT_PERSONAL_WEBSITE}
+    volumes:
+      - ${PATH_TO_PERSONAL_WEBSITE_REPO}:${SERVER_ROOT}
+    networks:
+      - docker-net
+
+networks:
+  docker-net:
+    external: true

@@ -1,0 +1,57 @@
+services:
+  bookstack:
+    image: lscr.io/linuxserver/bookstack:latest
+    container_name: bookstack
+    restart: unless-stopped
+    networks:
+      - docker-net
+      - bookstack-internal
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - APP_URL=${BOOKSTACK_APP_URL}
+      - APP_KEY=${BOOKSTACK_APP_KEY}
+      - DB_HOST=bookstack-mariadb
+      - DB_PORT=${BOOKSTACK_MARIADB_PORT}
+      - DB_DATABASE=${BOOKSTACK_MARIADB_DATABASE_NAME}
+      - DB_USERNAME=${BOOKSTACK_MARIADB_DATABASE_USERNAME}
+      - DB_PASSWORD=${BOOKSTACK_MARIADB_DATABASE_PASSWORD}
+      - APP_DEFAULT_DARK_MODE=true # Enable dark mode by default
+    volumes:
+      - /etc/localtime:/etc/localtime:ro                                      #To have the same time as the host
+      - /etc/localtime:/etc/timezone:ro                                       #To have the same time as the host
+      - bookstack-volume-config:/config
+    ports:
+      - ${PORT_BOOKSTACK}:80
+
+  # The container for the database which BookStack will use to store most of its core data/content.
+  bookstack-mariadb:
+    image: lscr.io/linuxserver/mariadb:11.4.4
+    container_name: bookstack-mariadb
+    restart: unless-stopped
+    networks:
+      - bookstack-internal
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - MYSQL_ROOT_PASSWORD=${BOOKSTACK_MARIADB_MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${BOOKSTACK_MARIADB_DATABASE_NAME}
+      - MYSQL_USER=${BOOKSTACK_MARIADB_DATABASE_USERNAME}
+      - MYSQL_PASSWORD=${BOOKSTACK_MARIADB_DATABASE_PASSWORD}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro                                      #To have the same time as the host
+      - /etc/localtime:/etc/timezone:ro                                       #To have the same time as the host
+      - bookstack-mariadb-volume-config:/config
+
+volumes:
+  bookstack-volume-config:
+    external: true
+  bookstack-mariadb-volume-config:
+    external: true
+
+networks:
+  docker-net:
+    external: true
+  bookstack-internal:
+    name: bookstack-internal
+    driver: bridge

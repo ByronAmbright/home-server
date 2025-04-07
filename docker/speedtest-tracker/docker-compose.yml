@@ -1,0 +1,39 @@
+services:
+  speedtest-tracker:
+    image: lscr.io/linuxserver/speedtest-tracker:latest
+    container_name: speedtest-tracker
+    hostname: speedtest-tracker
+    restart: unless-stopped
+    networks:
+      - docker-net
+    volumes:
+      - /etc/localtime:/etc/localtime:ro                                      #To have the same time as the host
+      - /etc/localtime:/etc/timezone:ro                                       #To have the same time as the host
+      - speedtest-tracker-volume-config:/config
+      - speedtest-tracker-volume-keys:/config/keys
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - APP_TIMEZONE=${TZ}
+      - DISPLAY_TIMEZONE=${TZ}
+      - DB_CONNECTION=${SPEEDTEST_DB_CONNECTION}
+      - APP_NAME=${SPEEDTEST_TRACKER_APP_NAME}
+      - APP_KEY=${SPEEDTEST_TRACKER_APP_KEY}
+      - APP_URL=${SPEEDTEST_TRACKER_APP_URL}
+      - SPEEDTEST_SCHEDULE=${SPEEDTEST_SCHEDULE}
+      - SPEEDTEST_SERVERS=${SPEEDTEST_SERVERS}
+    ports:
+      - ${PORT_SPEEDTEST_TRACKER_HTTP_OUT}:${PORT_HTTP_DEFAULT}
+      - ${PORT_SPEEDTEST_TRACKER_HTTPS_OUT}:${PORT_HTTPS_DEFAULT}
+
+networks:
+  docker-net:
+    external: true
+
+volumes:
+  speedtest-tracker-volume-config:
+    external: true
+  speedtest-tracker-volume-keys:
+    external: true
+

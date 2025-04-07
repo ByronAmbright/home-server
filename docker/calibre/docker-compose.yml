@@ -1,0 +1,31 @@
+services:
+  calibre:
+    image: lscr.io/linuxserver/calibre:latest
+    container_name: calibre
+    restart: unless-stopped
+    networks:
+      - docker-net
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - CUSTOM_PORT=${PORT_CALIBRE_DESKTOP_GUI}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro                                      #To have the same time as the host
+      - /etc/localtime:/etc/timezone:ro                                       #To have the same time as the host
+      - calibre-volume-config:/config
+      - ${CALIBRE_BOOKS_FOLDER_2}:/books
+      - ${CALIBRE_IMPORT_FOLDER_2}:/import
+    ports:
+      - ${PORT_CALIBRE_DESKTOP_GUI}:${PORT_CALIBRE_DESKTOP_GUI}
+      - ${PORT_CALIBRE_DESKTOP_GUI_HTTPS}:${PORT_CALIBRE_DESKTOP_GUI_HTTPS}
+      - ${PORT_CALIBRE_WEBSERVER}:${PORT_CALIBRE_WEBSERVER}
+
+volumes:
+  calibre-volume-config:
+    external: true
+
+networks:
+  docker-net:
+    external: true

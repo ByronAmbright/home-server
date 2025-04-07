@@ -1,0 +1,42 @@
+services:
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    networks:
+      - docker-net
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - JELLYFIN_PublishedServerUrl=${JELLYFIN_PUBLISHED_SERVER_URL}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro                                      #To have the same time as the host
+      - /etc/localtime:/etc/timezone:ro                                       #To have the same time as the host
+      - jellyfin-volume-config:/config
+      - jellyfin-volume-cache:/cache
+      - ${TVSHOWS_FOLDER}:/data/tv-shows
+      - ${MOVIES_FOLDER}:/data/movies
+      - ${ANIMATED_TVSHOWS_FOLDER}:/data/animated-tv-shows
+      - ${TVSHOWS_FOLDER_1}:/data/tv-shows1
+      - ${MOVIES_FOLDER_1}:/data/movies1
+      - ${ANIMATED_TVSHOWS_FOLDER_1}:/data/animated-tv-shows1
+      - ${TVSHOWS_FOLDER_2}:/data/tv-shows2
+      - ${MOVIES_FOLDER_2}:/data/movies2
+      - ${ANIMATED_TVSHOWS_FOLDER_2}:/data/animated-tv-shows2
+    ports:
+      - ${PORT_JELLYFIN_HTTP}:${PORT_JELLYFIN_HTTP}
+      - ${PORT_JELLYFIN_HTTPS}:${PORT_JELLYFIN_HTTPS}
+      - ${PORT_JELLYFIN_CLIENT_DISCOVERY}:${PORT_JELLYFIN_CLIENT_DISCOVERY} # optional
+      - ${PORT_JELLYFIN_SERVICE_DISCOVERY}:${PORT_JELLYFIN_SERVICE_DISCOVERY}/udp # optional
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
+volumes:
+  jellyfin-volume-config:
+    external: true
+  jellyfin-volume-cache:
+    external: true
+
+networks:
+  docker-net:
+    external: true

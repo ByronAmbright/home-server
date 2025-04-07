@@ -1,0 +1,19 @@
+services:
+  actual-server:
+    image: 'actualbudget/actual-server:latest'
+    container_name: actual-server
+    networks:
+      - docker-net
+    ports:
+      - ${PORT_ACTUAL}:${PORT_ACTUAL}
+    volumes:
+      - actual-volume-config:/data
+    restart: unless-stopped
+
+volumes:
+  actual-volume-config:
+    external: true
+
+networks:
+  docker-net:
+    external: true

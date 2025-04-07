@@ -1,0 +1,19 @@
+services:
+  notifiarr:
+    image: golift/notifiarr:latest
+    container_name: notifiarr
+    restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime:ro                                      #To have the same time as the host
+      - /etc/localtime:/etc/timezone:ro                                       #To have the same time as the host
+      - notifiarr-volume-config:/config
+      - /var/run/utmp:/var/run/utmp          # optional, only needed if you want to count users
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK=${UMASK}
+    network_mode: "container:gluetun"
+
+volumes:
+  notifiarr-volume-config:
+    external: true

@@ -1,0 +1,22 @@
+services:
+  radarr:
+    image: ghcr.io/hotio/radarr:latest
+    container_name: radarr
+    restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime:ro                                      #To have the same time as the host
+      - /etc/localtime:/etc/timezone:ro                                       #To have the same time as the host
+      - radarr-volume-config:/config
+      - ${QBITTORRENT_DOWNLOADS_FOLDER}:/downloads                              #qBittorrent downloads folder
+      - ${MOVIES_FOLDER}:/data/movies
+      - ${MOVIES_FOLDER_1}:/data/movies1
+      - ${MOVIES_FOLDER_2}:/data/movies2
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK=${UMASK}
+    network_mode: "container:gluetun"
+
+volumes:
+  radarr-volume-config:
+    external: true

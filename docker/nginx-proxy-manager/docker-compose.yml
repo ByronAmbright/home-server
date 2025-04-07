@@ -1,0 +1,27 @@
+services:
+  nginx-proxy-manager:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      - ${PORT_HTTP_DEFAULT}:${PORT_HTTP_DEFAULT} # Public HTTP Port
+      - ${PORT_HTTPS_DEFAULT}:${PORT_HTTPS_DEFAULT} # Public HTTPS Port
+      - ${PORT_ADMIN_NGINX_PROXY_MANAGER}:${PORT_ADMIN_NGINX_PROXY_MANAGER} # Admin Web Port
+    networks:
+      - docker-net
+      - docker-vpn-net
+    volumes:
+      - nginx-proxy-manager-volume-config:/data
+      - nginx-proxy-manager-letsencrypt-volume-config:/etc/letsencrypt
+
+networks:
+  docker-net:
+    external: true
+  docker-vpn-net:
+    external: true
+
+volumes:
+  nginx-proxy-manager-volume-config:
+    external: true
+  nginx-proxy-manager-letsencrypt-volume-config:
+    external: true

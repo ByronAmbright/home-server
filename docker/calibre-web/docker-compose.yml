@@ -1,0 +1,29 @@
+services:
+  calibre-web:
+    image: lscr.io/linuxserver/calibre-web:latest
+    container_name: calibre-web
+    restart: unless-stopped
+    networks:
+      - docker-net
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - DOCKER_MODS=linuxserver/mods:universal-calibre
+    volumes:
+      - /etc/localtime:/etc/localtime:ro                                      #To have the same time as the host
+      - /etc/localtime:/etc/timezone:ro                                       #To have the same time as the host
+      - calibre-web-volume-config:/config
+      - ${CALIBRE_BOOKS_FOLDER_2}:/books
+      - ${CALIBRE_IMPORT_FOLDER_2}:/import
+    ports:
+      - ${PORT_CALIBRE_WEB}:${PORT_CALIBRE_WEB}
+
+volumes:
+  calibre-volume-config:
+    external: true
+  calibre-web-volume-config:
+    external: true
+
+networks:
+  docker-net:
+    external: true

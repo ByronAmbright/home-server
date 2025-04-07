@@ -1,0 +1,28 @@
+services:
+  speedtest-tracker-vpn:
+    image: lscr.io/linuxserver/speedtest-tracker:latest
+    container_name: speedtest-tracker-vpn
+    restart: unless-stopped
+    network_mode: "container:gluetun"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro                                      #To have the same time as the host
+      - /etc/localtime:/etc/timezone:ro                                       #To have the same time as the host
+      - speedtest-tracker-vpn-volume-config:/config
+      - speedtest-tracker-vpn-volume-keys:/config/keys
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - APP_TIMEZONE=${TZ}
+      - DISPLAY_TIMEZONE=${TZ}
+      - DB_CONNECTION=${SPEEDTEST_DB_CONNECTION}
+      - APP_NAME=${SPEEDTEST_TRACKER_VPN_APP_NAME}
+      - APP_KEY=${SPEEDTEST_TRACKER_VPN_APP_KEY}
+      - APP_URL=${SPEEDTEST_TRACKER_VPN_APP_URL}
+      - SPEEDTEST_SCHEDULE=${SPEEDTEST_SCHEDULE}
+
+volumes:
+  speedtest-tracker-vpn-volume-config:
+    external: true
+  speedtest-tracker-vpn-volume-keys:
+    external: true

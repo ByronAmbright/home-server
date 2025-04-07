@@ -1,0 +1,17 @@
+services:
+  prowlarr:
+    container_name: prowlarr
+    image: linuxserver/prowlarr:latest
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro                                      #To have the same time as the host
+      - /etc/localtime:/etc/timezone:ro                                       #To have the same time as the host
+      - prowlarr-volume-config:/config
+    network_mode: "container:gluetun"
+  
+volumes:
+  prowlarr-volume-config:
+    external: true

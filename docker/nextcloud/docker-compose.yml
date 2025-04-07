@@ -1,0 +1,52 @@
+services:
+  # Defines the Nextcloud service
+  nextcloud:
+    image: linuxserver/nextcloud:latest 
+    container_name: nextcloud
+    restart: unless-stopped
+    networks:
+      - docker-net
+      - nextcloud-network-internal
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro                                      #To have the same time as the host
+      - /etc/localtime:/etc/timezone:ro                                       #To have the same time as the host
+      - nextcloud-volume-config:/config                                       # Volume for Nextcloud configuration files.
+      - nextcloud-volume-data:/data                                            # Volume for Nextcloud data (e.g., user files).
+      - ${NEXTCLOUD_EXTERNAL_STORAGE_DIRECTORY}:/external-data
+    ports:
+      - ${PORT_NEXTCLOUD}:443
+
+  # Defines the database service for Nextcloud
+  nextcloud-mariadb:
+    container_name: nextcloud-mariadb
+    image: mariadb:latest
+    networks:
+      - nextcloud-network-internal
+    restart: on-failure
+    volumes:
+      - /etc/localtime:/etc/localtime:ro                                      #To have the same time as the host
+      - /etc/localtime:/etc/timezone:ro                                       #To have the same time as the host
+      - nextcloud-mariadb-volume-data:/var/lib/mysql
+    environment:
+      - MARIADB_ROOT_PASSWORD=${NEXTCLOUD_MARIADB_MYSQL_ROOT_PASSWORD}
+      - MARIADB_DATABASE=${NEXTCLOUD_MARIADB_DATABASE_NAME}
+      - MARIADB_USER=${NEXTCLOUD_MARIADB_DATABASE_USERNAME}
+      - MARIADB_PASSWORD=${NEXTCLOUD_MARIADB_DATABASE_PASSWORD}
+
+networks:
+  docker-net:
+    external: true
+  nextcloud-network-internal:
+    name: nextcloud-network-internal
+    driver: bridge
+
+volumes:
+  nextcloud-volume-config:
+    external: true
+  nextcloud-volume-data:
+    external: true
+  nextcloud-mariadb-volume-data:
+    external: true

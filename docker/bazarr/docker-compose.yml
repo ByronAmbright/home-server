@@ -1,0 +1,23 @@
+services:
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    volumes:
+      - /etc/localtime:/etc/localtime:ro                                      #To have the same time as the host
+      - /etc/localtime:/etc/timezone:ro                                       #To have the same time as the host
+      - bazarr-volume-config:/config
+      - ${TVSHOWS_FOLDER}:/data/tv-shows
+      - ${MOVIES_FOLDER}:/data/movies
+      - ${ANIMATED_TVSHOWS_FOLDER}:/data/animated-tv-shows
+      - ${TVSHOWS_FOLDER_1}:/data/tv-shows1
+      - ${MOVIES_FOLDER_1}:/data/movies1
+      - ${ANIMATED_TVSHOWS_FOLDER_1}:/data/animated-tv-shows1
+      - ${TVSHOWS_FOLDER_2}:/data/tv-shows2
+      - ${MOVIES_FOLDER_2}:/data/movies2
+      - ${ANIMATED_TVSHOWS_FOLDER_2}:/data/animated-tv-shows2
+    restart: unless-stopped
+    network_mode: "container:gluetun"
+
+volumes:
+  bazarr-volume-config:
+    external: true
