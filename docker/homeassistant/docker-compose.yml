@@ -1,0 +1,37 @@
+services:
+  # Defines the Nextcloud service
+  nextcloud:
+    image:  ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    restart: unless-stopped
+    stop_grace_period: 60s
+    network_mode: host
+    # networks:
+    #   - docker-net
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=UTC
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8123/', timeout=5)"
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s  
+    volumes:
+      - /etc/localtime:/etc/localtime:ro                                      # To have the same time as the host
+      - /etc/localtime:/etc/timezone:ro                                       # To have the same time as the host
+      - homeassistant-volume-config:/config                                          # Mounting the local homeassistant_config directory to /config inside the container
+      - /run/dbus:/run/dbus:ro                                                # Mounting the local /run/dbus to /run/dbus inside the container
+    ports:
+      - ${PORT_HOMEASSISTANT}:${PORT_HOMEASSISTANT}
+
+# networks:
+#   docker-net:
+#     external: true
+
+volumes:
+  homeassistant-volume-config:
+    external: true

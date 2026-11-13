@@ -17,7 +17,8 @@ services:
       - nextcloud-volume-data:/data                                            # Volume for Nextcloud data (e.g., user files).
       - ${NEXTCLOUD_EXTERNAL_STORAGE_DIRECTORY}:/external-data
     ports:
-      - ${PORT_NEXTCLOUD}:443
+      - ${PORT_NEXTCLOUD}:${PORT_HTTP_DEFAULT}
+      - ${PORT_NEXTCLOUD_HTTPS}:${PORT_HTTPS_DEFAULT}
 
   # Defines the database service for Nextcloud
   nextcloud-mariadb:

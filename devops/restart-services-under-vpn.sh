@@ -6,7 +6,7 @@ REPO_ROOT=$(cd "$CURRENT_DIR"/.. && pwd)
 GLUETUN_READY_LOG="INFO \[ip getter\] Public IP address is"
 GLUETUN_LOGS_FILE_NAME="gluetun-docker-output.log"
 
-echo -e "\nShutting down vpn and services under it"
+echo -e "\nShutting down vpn and services under it if they are running"
 
 make services-under-vpn-down
 make vpn-down

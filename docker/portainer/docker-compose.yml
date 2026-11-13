@@ -9,6 +9,9 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - portainer-volume-config:/data
+    ports:
+      - ${PORT_PORTAINER}:${PORT_PORTAINER}     
+      - ${PORT_PORTAINER_HTTPS}:${PORT_PORTAINER_HTTPS}     
 
 networks:
   docker-net:

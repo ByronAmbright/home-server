@@ -1,3 +1,4 @@
 *.env
 !*.env.example
 backups
+removed-log.txt

@@ -9,12 +9,15 @@ services:
       - ${TVSHOWS_FOLDER}:/data/tv-shows
       - ${MOVIES_FOLDER}:/data/movies
       - ${ANIMATED_TVSHOWS_FOLDER}:/data/animated-tv-shows
+      - ${ANIMATED_MOVIES_FOLDER}:/data/animated-movies
       - ${TVSHOWS_FOLDER_1}:/data/tv-shows1
       - ${MOVIES_FOLDER_1}:/data/movies1
       - ${ANIMATED_TVSHOWS_FOLDER_1}:/data/animated-tv-shows1
+      - ${ANIMATED_MOVIES_FOLDER_1}:/data/animated-movies1
       - ${TVSHOWS_FOLDER_2}:/data/tv-shows2
       - ${MOVIES_FOLDER_2}:/data/movies2
       - ${ANIMATED_TVSHOWS_FOLDER_2}:/data/animated-tv-shows2
+      - ${ANIMATED_MOVIES_FOLDER_2}:/data/animated-movies2
     restart: unless-stopped
     network_mode: "container:gluetun"
 

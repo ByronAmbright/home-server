@@ -3,6 +3,8 @@ services:
     image: 'jc21/nginx-proxy-manager:latest'
     container_name: nginx-proxy-manager
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - ${PORT_HTTP_DEFAULT}:${PORT_HTTP_DEFAULT} # Public HTTP Port
       - ${PORT_HTTPS_DEFAULT}:${PORT_HTTPS_DEFAULT} # Public HTTPS Port
