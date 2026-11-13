@@ -1,0 +1,313 @@
+version: '3'
+
+silent: true
+
+includes:
+  generated:
+    taskfile: ./Taskfile.generated.yml
+    flatten: true
+
+vars:
+  COMPOSE: docker compose --env-file ./.env
+  COMPOSE_FILE: docker-compose.yml
+  BACKUP_DIR: '{{.ROOT_DIR}}/backups'
+
+  NETWORKS: docker-net docker-vpn-net
+
+  ADMIN_SERVICES: nginx-proxy-manager portainer
+  MEDIA_SERVICES: jellyfin jellyseerr radarr sonarr prowlarr bazarr flaresolverr calibre calibre-web
+  TORRENT_SERVICES: qbittorrent
+  VPN_SERVICES: gluetun
+  FINANCE_SERVICES: actual fireflyiii
+  UTIL_SERVICES: speedtest-tracker speedtest-tracker-vpn
+  OTHER_SERVICES: personal-website bookstack nextcloud minecraft homeassistant
+  SERVICES_UNDER_VPN: jellyseerr radarr sonarr prowlarr bazarr flaresolverr qbittorrent speedtest-tracker-vpn
+  ALL_SERVICES: >-
+    {{.ADMIN_SERVICES}} {{.MEDIA_SERVICES}} {{.TORRENT_SERVICES}} {{.VPN_SERVICES}}
+    {{.FINANCE_SERVICES}} {{.UTIL_SERVICES}} {{.OTHER_SERVICES}}
+
+  # Volumes declared in the docker compose files.
+  VOLUMES:
+    sh: ./devops/list-volumes.sh | tr '\n' ' '
+
+tasks:
+  generate:
+    desc: Regenerate per-item tasks (e.g. jellyfin-up) used for autocompletion
+    cmds:
+      - ./devops/generate-taskfile.sh
+
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  # Templates (pass the variable on the command line, e.g. `task up c=jellyfin`)
+  up:
+    desc: Start c=<container name> container
+    requires: {vars: [c]}
+    cmds:
+      - echo "Starting container{{":"}} {{.c}}"
+      - '{{.COMPOSE}} -f docker/{{.c}}/{{.COMPOSE_FILE}} up -d'
+
+  down:
+    desc: Stop c=<container name> container
+    requires: {vars: [c]}
+    cmds:
+      - echo "Stopping container{{":"}} {{.c}}"
+      - '{{.COMPOSE}} -f docker/{{.c}}/{{.COMPOSE_FILE}} down'
+
+  pull:
+    desc: Pull latest image of c=<container name> container
+    requires: {vars: [c]}
+    cmds:
+      - echo "Pulling latest for container{{":"}} {{.c}}"
+      - '{{.COMPOSE}} -f docker/{{.c}}/{{.COMPOSE_FILE}} pull'
+
+  logs:
+    desc: Show logs of c=<container name> container
+    requires: {vars: [c]}
+    cmds:
+      - echo "Showing logs for container{{":"}} {{.c}}"
+      - '{{.COMPOSE}} -f docker/{{.c}}/{{.COMPOSE_FILE}} logs --tail=100'
+
+  status:
+    desc: Show status of c=<container name> container
+    requires: {vars: [c]}
+    cmds:
+      - echo "Pulling status for container{{":"}} {{.c}}"
+      - '{{.COMPOSE}} -f docker/{{.c}}/{{.COMPOSE_FILE}} ps'
+
+  clean:
+    desc: Clean all data of c=<container name> container
+    requires: {vars: [c]}
+    cmds:
+      - echo "Cleaning all data for container{{":"}} {{.c}}"
+      - '{{.COMPOSE}} -f docker/{{.c}}/{{.COMPOSE_FILE}} down'
+
+  restart:
+    desc: Restart c=<container name> container
+    requires: {vars: [c]}
+    cmds:
+      - echo "Restarting container{{":"}} {{.c}}"
+      - {task: down, vars: {c: '{{.c}}'}}
+      - {task: up, vars: {c: '{{.c}}'}}
+
+  update-and-restart:
+    desc: Pull image and restart c=<container name> container
+    requires: {vars: [c]}
+    cmds:
+      - echo "Updating and restarting container{{":"}} {{.c}}"
+      - {task: pull, vars: {c: '{{.c}}'}}
+      - {task: restart, vars: {c: '{{.c}}'}}
+
+  debug:
+    desc: '"SSH" into c=<container name> container'
+    requires: {vars: [c]}
+    interactive: true
+    cmds:
+      - echo "Debugging into container{{":"}} {{.c}}"
+      - docker exec -it {{.c}} bash
+
+  volume-create:
+    desc: Create v=<volume name> volume
+    requires: {vars: [v]}
+    cmds:
+      - echo "Creating volume{{":"}} {{.v}}"
+      - docker volume create {{.v}}
+
+  volume-remove:
+    desc: Remove v=<volume name> volume
+    requires: {vars: [v]}
+    cmds:
+      - echo "Removing volume{{":"}} {{.v}}"
+      - docker volume rm {{.v}}
+
+  volume-inspect:
+    desc: Inspect v=<volume name> volume
+    requires: {vars: [v]}
+    cmds:
+      - echo "Inspect volume{{":"}} {{.v}}"
+      - docker volume inspect {{.v}}
+
+  volume-migrate:
+    desc: Copy v=<volume name> volume into v1=<volume name or path> destination
+    requires: {vars: [v, v1]}
+    cmds:
+      - echo "Copying volume from{{":"}} {{.v}} to {{.v1}}"
+      - docker run --rm -v {{.v}}:/original -v {{.v1}}:/migration ubuntu bash -c "cp -R /original/* /migration/"
+
+  volume-migrate-and-delete:
+    desc: Copy v=<volume name> into v1=<volume name> and then delete the original volume
+    requires: {vars: [v, v1]}
+    cmds:
+      - {task: volume-migrate, vars: {v: '{{.v}}', v1: '{{.v1}}'}}
+      - {task: volume-remove, vars: {v: '{{.v}}'}}
+
+  volume-backup:
+    desc: Backup v=<volume name> volume into ./backups/volumes/<v>-backup
+    requires: {vars: [v]}
+    cmds:
+      - echo "Backing up volume{{":"}} {{.v}} to {{.BACKUP_DIR}}/volumes/{{.v}}-backup"
+      - {task: volume-migrate, vars: {v: '{{.v}}', v1: '{{.BACKUP_DIR}}/volumes/{{.v}}-backup'}}
+
+  volume-backup-and-tar:
+    desc: Backup and tar v=<volume name> volume into ./backups/<v>-backup.tar.gz
+    requires: {vars: [v]}
+    cmds:
+      - echo "Making a .tar.gz of volume{{":"}} {{.v}} at {{.BACKUP_DIR}}/{{.v}}-backup.tar.gz"
+      - {task: volume-migrate, vars: {v: '{{.v}}', v1: '{{.BACKUP_DIR}}/volumes/{{.v}}-backup'}}
+      - sudo tar -cvf {{.BACKUP_DIR}}/{{.v}}-backup.tar.gz {{.BACKUP_DIR}}/volumes/{{.v}}-backup
+
+  network-create:
+    desc: Create n=<network name> network
+    requires: {vars: [n]}
+    cmds:
+      - echo "Creating network{{":"}} {{.n}}"
+      - docker network create --driver bridge {{.n}}
+
+  network-remove:
+    desc: Remove n=<network name> network
+    requires: {vars: [n]}
+    cmds:
+      - echo "Removing network{{":"}} {{.n}}"
+      - docker network rm {{.n}}
+
+  debug-network:
+    desc: '"SSH" into an ubuntu container on n=<network name> network'
+    requires: {vars: [n]}
+    interactive: true
+    cmds:
+      - echo "Debugging into ubuntu container on network{{":"}} {{.n}}"
+      - docker run -it --network {{.n}} ubuntu bash
+
+  pull-image:
+    desc: Pull i=<image name> image
+    requires: {vars: [i]}
+    cmds:
+      - echo "Pulling image{{":"}} {{.i}}"
+      - docker pull {{.i}}
+
+  # Group commands
+  all-up:
+    desc: Start all services
+    cmds:
+      - for: {var: ALL_SERVICES, split: ' '}
+        task: up
+        vars: {c: '{{.ITEM}}'}
+  all-down:
+    desc: Stop all services
+    cmds:
+      - for: {var: ALL_SERVICES, split: ' '}
+        task: down
+        vars: {c: '{{.ITEM}}'}
+  all-pull:
+    desc: Pull all service images
+    cmds:
+      - for: {var: ALL_SERVICES, split: ' '}
+        task: pull
+        vars: {c: '{{.ITEM}}'}
+  all-restart:
+    desc: Restart all services
+    cmds:
+      - for: {var: ALL_SERVICES, split: ' '}
+        task: restart
+        vars: {c: '{{.ITEM}}'}
+  all-update-and-restart:
+    desc: Pull and restart all services
+    cmds:
+      - for: {var: ALL_SERVICES, split: ' '}
+        task: update-and-restart
+        vars: {c: '{{.ITEM}}'}
+
+  admin-up: {desc: Start admin services, cmds: [{for: {var: ADMIN_SERVICES, split: ' '}, task: up, vars: {c: '{{.ITEM}}'}}]}
+  admin-down: {desc: Stop admin services, cmds: [{for: {var: ADMIN_SERVICES, split: ' '}, task: down, vars: {c: '{{.ITEM}}'}}]}
+  admin-pull: {desc: Pull admin service images, cmds: [{for: {var: ADMIN_SERVICES, split: ' '}, task: pull, vars: {c: '{{.ITEM}}'}}]}
+  admin-restart: {desc: Restart admin services, cmds: [{for: {var: ADMIN_SERVICES, split: ' '}, task: restart, vars: {c: '{{.ITEM}}'}}]}
+  admin-update-and-restart: {desc: Pull and restart admin services, cmds: [{for: {var: ADMIN_SERVICES, split: ' '}, task: update-and-restart, vars: {c: '{{.ITEM}}'}}]}
+
+  vpn-up: {desc: Start VPN services, cmds: [{for: {var: VPN_SERVICES, split: ' '}, task: up, vars: {c: '{{.ITEM}}'}}]}
+  vpn-down: {desc: Stop VPN services, cmds: [{for: {var: VPN_SERVICES, split: ' '}, task: down, vars: {c: '{{.ITEM}}'}}]}
+  vpn-pull: {desc: Pull VPN service images, cmds: [{for: {var: VPN_SERVICES, split: ' '}, task: pull, vars: {c: '{{.ITEM}}'}}]}
+  vpn-restart: {desc: Restart VPN services, cmds: [{for: {var: VPN_SERVICES, split: ' '}, task: restart, vars: {c: '{{.ITEM}}'}}]}
+  vpn-update-and-restart: {desc: Pull and restart VPN services, cmds: [{for: {var: VPN_SERVICES, split: ' '}, task: update-and-restart, vars: {c: '{{.ITEM}}'}}]}
+
+  services-under-vpn-up: {desc: Start services under VPN, cmds: [{for: {var: SERVICES_UNDER_VPN, split: ' '}, task: up, vars: {c: '{{.ITEM}}'}}]}
+  services-under-vpn-down: {desc: Stop services under VPN, cmds: [{for: {var: SERVICES_UNDER_VPN, split: ' '}, task: down, vars: {c: '{{.ITEM}}'}}]}
+  services-under-vpn-pull: {desc: Pull images of services under VPN, cmds: [{for: {var: SERVICES_UNDER_VPN, split: ' '}, task: pull, vars: {c: '{{.ITEM}}'}}]}
+  services-under-vpn-restart: {desc: Restart services under VPN, cmds: [{for: {var: SERVICES_UNDER_VPN, split: ' '}, task: restart, vars: {c: '{{.ITEM}}'}}]}
+  services-under-vpn-update-and-restart: {desc: Pull and restart services under VPN, cmds: [{for: {var: SERVICES_UNDER_VPN, split: ' '}, task: update-and-restart, vars: {c: '{{.ITEM}}'}}]}
+
+  torrent-up: {desc: Start torrent services, cmds: [{for: {var: TORRENT_SERVICES, split: ' '}, task: up, vars: {c: '{{.ITEM}}'}}]}
+  torrent-down: {desc: Stop torrent services, cmds: [{for: {var: TORRENT_SERVICES, split: ' '}, task: down, vars: {c: '{{.ITEM}}'}}]}
+  torrent-pull: {desc: Pull torrent service images, cmds: [{for: {var: TORRENT_SERVICES, split: ' '}, task: pull, vars: {c: '{{.ITEM}}'}}]}
+  torrent-restart: {desc: Restart torrent services, cmds: [{for: {var: TORRENT_SERVICES, split: ' '}, task: restart, vars: {c: '{{.ITEM}}'}}]}
+  torrent-update-and-restart: {desc: Pull and restart torrent services, cmds: [{for: {var: TORRENT_SERVICES, split: ' '}, task: update-and-restart, vars: {c: '{{.ITEM}}'}}]}
+
+  media-up: {desc: Start media services, cmds: [{for: {var: MEDIA_SERVICES, split: ' '}, task: up, vars: {c: '{{.ITEM}}'}}]}
+  media-down: {desc: Stop media services, cmds: [{for: {var: MEDIA_SERVICES, split: ' '}, task: down, vars: {c: '{{.ITEM}}'}}]}
+  media-pull: {desc: Pull media service images, cmds: [{for: {var: MEDIA_SERVICES, split: ' '}, task: pull, vars: {c: '{{.ITEM}}'}}]}
+  media-restart: {desc: Restart media services, cmds: [{for: {var: MEDIA_SERVICES, split: ' '}, task: restart, vars: {c: '{{.ITEM}}'}}]}
+  media-update-and-restart: {desc: Pull and restart media services, cmds: [{for: {var: MEDIA_SERVICES, split: ' '}, task: update-and-restart, vars: {c: '{{.ITEM}}'}}]}
+
+  finance-up: {desc: Start finance services, cmds: [{for: {var: FINANCE_SERVICES, split: ' '}, task: up, vars: {c: '{{.ITEM}}'}}]}
+  finance-down: {desc: Stop finance services, cmds: [{for: {var: FINANCE_SERVICES, split: ' '}, task: down, vars: {c: '{{.ITEM}}'}}]}
+  finance-pull: {desc: Pull finance service images, cmds: [{for: {var: FINANCE_SERVICES, split: ' '}, task: pull, vars: {c: '{{.ITEM}}'}}]}
+  finance-restart: {desc: Restart finance services, cmds: [{for: {var: FINANCE_SERVICES, split: ' '}, task: restart, vars: {c: '{{.ITEM}}'}}]}
+  finance-update-and-restart: {desc: Pull and restart finance services, cmds: [{for: {var: FINANCE_SERVICES, split: ' '}, task: update-and-restart, vars: {c: '{{.ITEM}}'}}]}
+
+  other-up: {desc: Start other services, cmds: [{for: {var: OTHER_SERVICES, split: ' '}, task: up, vars: {c: '{{.ITEM}}'}}]}
+  other-down: {desc: Stop other services, cmds: [{for: {var: OTHER_SERVICES, split: ' '}, task: down, vars: {c: '{{.ITEM}}'}}]}
+  other-pull: {desc: Pull other service images, cmds: [{for: {var: OTHER_SERVICES, split: ' '}, task: pull, vars: {c: '{{.ITEM}}'}}]}
+  other-restart: {desc: Restart other services, cmds: [{for: {var: OTHER_SERVICES, split: ' '}, task: restart, vars: {c: '{{.ITEM}}'}}]}
+  other-update-and-restart: {desc: Pull and restart other services, cmds: [{for: {var: OTHER_SERVICES, split: ' '}, task: update-and-restart, vars: {c: '{{.ITEM}}'}}]}
+
+  create-all-networks:
+    desc: Create all networks
+    cmds:
+      - for: {var: NETWORKS, split: ' '}
+        task: network-create
+        vars: {n: '{{.ITEM}}'}
+  remove-all-networks:
+    desc: Remove all networks
+    cmds:
+      - for: {var: NETWORKS, split: ' '}
+        task: network-remove
+        vars: {n: '{{.ITEM}}'}
+
+  create-all-volumes:
+    desc: Create all volumes
+    cmds:
+      - for: {var: VOLUMES, split: ' '}
+        task: volume-create
+        vars: {v: '{{.ITEM}}'}
+  remove-all-volumes:
+    desc: Remove all volumes
+    cmds:
+      - for: {var: VOLUMES, split: ' '}
+        task: volume-remove
+        vars: {v: '{{.ITEM}}'}
+  backup-all-volumes:
+    desc: Backup all volumes
+    cmds:
+      - for: {var: VOLUMES, split: ' '}
+        task: volume-backup
+        vars: {v: '{{.ITEM}}'}
+  backup-and-tar-all-volumes:
+    desc: Backup and tar all volumes
+    cmds:
+      - for: {var: VOLUMES, split: ' '}
+        task: volume-backup-and-tar
+        vars: {v: '{{.ITEM}}'}
+
+  pull-ubuntu-image:
+    desc: Pull the ubuntu image
+    cmds:
+      - {task: pull-image, vars: {i: 'ubuntu:latest'}}
+
+  setup-repo:
+    desc: Pull images, and create networks and volumes
+    cmds:
+      - task: pull-ubuntu-image
+      - task: all-pull
+      - task: create-all-networks
+      - task: create-all-volumes

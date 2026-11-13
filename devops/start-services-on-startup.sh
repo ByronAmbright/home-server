@@ -21,6 +21,6 @@ echo -e "\ndirname: $dirname"
 echo -e "\nShutting down any services not meant to be started at startup"
 
 for service in "${services_to_stop[@]}"; do
-    make_down_command="$service-down"
-    make $make_down_command
+    task_down_command="$service-down"
+    task $task_down_command
 done

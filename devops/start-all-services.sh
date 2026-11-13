@@ -5,11 +5,11 @@ REPO_ROOT=$(cd "$CURRENT_DIR"/.. && pwd)
 
 echo -e "\nShutting down any running services"
 
-make all-down
+task all-down
 
 echo "Starting Admin Services"
 
-make admin-up
+task admin-up
 
 echo "Starting VPN and Services Under VPN by script"
 
@@ -17,4 +17,4 @@ echo "Starting VPN and Services Under VPN by script"
 
 echo "Starting all other services"
 
-make all-up
+task all-up

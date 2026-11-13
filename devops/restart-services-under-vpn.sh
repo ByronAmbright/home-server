@@ -8,12 +8,12 @@ GLUETUN_LOGS_FILE_NAME="gluetun-docker-output.log"
 
 echo -e "\nShutting down vpn and services under it if they are running"
 
-make services-under-vpn-down
-make vpn-down
+task services-under-vpn-down
+task vpn-down
 
 echo "Starting VPN"
 
-make vpn-up
+task vpn-up
 
 echo "Waiting for gluetun to be ready:"
 
@@ -41,4 +41,4 @@ done
 
 echo "Starting Services Under VPN"
 
-make services-under-vpn-up
+task services-under-vpn-up
